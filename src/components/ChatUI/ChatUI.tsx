@@ -51,20 +51,16 @@ const ChatUI = () => {
   }, [currentChatGeoPTResponse, isLoadingChatResponse]);
 
   return (
-    <div>
+    <div className={Styles.chatUiContainer}>
       {displayedText.length > 0 && (
         <Box
           sx={{
-            padding: "20px",
-            border: "1px solid #ccc",
-            borderRadius: "5px",
+            margin: "2rem",
             backgroundColor: "#000000",
-            boxShadow: "0 2px 5px rgba(0, 0, 0, 0.2)",
-            transition: "height 0.5s ease",
-            height: boxHeight,
-            opacity: 0.9,
+            height: "100%",
             zIndex: 1000,
             color: "#ffffff",
+            overflowY: "auto",
           }}
         >
           {displayedText}

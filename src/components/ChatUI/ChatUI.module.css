@@ -1,5 +1,14 @@
+.chatUiContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+}
+
 .inputContainer {
   display: flex;
-  width: 100%;
   justify-content: space-between;
+  margin: 2rem;
+  padding: 2px;
+  border-radius: 10px;
+  border: 1px solid gray;
 }
