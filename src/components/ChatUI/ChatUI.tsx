@@ -1,36 +1,39 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   IconButton,
   SvgIcon,
   TextField,
   CircularProgress,
   Box,
+  Button,
 } from "@mui/material";
 import Styles from "./ChatUI.module.css";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import Api from "../../data/docs/Api";
 import {
-  currentChatResponseState,
+  chatHistoryState,
   isLoadingChatResponseState,
 } from "../../data/docs/Reducer";
 import { useSelector } from "react-redux";
+import { cleanText, truncateText } from "../../data/utils/DocsUtils";
 
 const introText =
-  "Ask any question about the loaded document. You can also ask me to summarize the entire document, or parts of it.";
+  "Ask any question about the loaded document. You can also ask to summarize the entire document or parts of it.";
 
 const ChatUI = () => {
   const isLoadingChatResponse = useSelector(isLoadingChatResponseState);
-  const currentChatGeoPTResponse = useSelector(currentChatResponseState);
+  const currentChatHistory = useSelector(chatHistoryState);
   const [userPrompt, setUserPrompt] = useState<string>("");
   const [canSubmit, setCanSubmit] = useState<boolean>(false);
-  const [displayedText, setDisplayedText] = useState(introText);
-  const boxHeight = displayedText.length > 0 ? "auto" : "0px";
 
   const handleSubmit = () => {
     if (canSubmit) {
-      const body = JSON.stringify({ prompt: userPrompt });
+      const chatHistory = [...currentChatHistory];
+      chatHistory.push({ human: userPrompt });
+      Api.setCurrentChatHistory(chatHistory);
+      const body = JSON.stringify({ question: userPrompt });
       try {
-        Api.getAndLoadChatResponse(body);
+        Api.documentQuery(body);
       } catch (error) {
         console.error("Error getting GeoPT response", error);
         window.alert(error);
@@ -40,32 +43,93 @@ const ChatUI = () => {
     setCanSubmit(false);
   };
 
-  useEffect(() => {
-    if (isLoadingChatResponse) {
-      setDisplayedText("");
-    }
-
-    if (currentChatGeoPTResponse) {
-      setDisplayedText(currentChatGeoPTResponse);
-    }
-  }, [currentChatGeoPTResponse, isLoadingChatResponse]);
-
   return (
     <div className={Styles.chatUiContainer}>
-      {displayedText.length > 0 && (
-        <Box
-          sx={{
-            margin: "2rem",
-            backgroundColor: "#000000",
-            height: "100%",
-            zIndex: 1000,
-            color: "#ffffff",
-            overflowY: "auto",
-          }}
-        >
-          {displayedText}
-        </Box>
-      )}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent:
+            currentChatHistory.length === 0 ? "center" : "flex-start",
+          alignItems: "flex-start",
+          gap: "3rem",
+          margin: "2rem",
+          backgroundColor: "#000000",
+          height: "100%",
+          zIndex: 1000,
+          color: "#ffffff",
+          overflowY: "auto",
+        }}
+      >
+        {currentChatHistory.length === 0
+          ? introText
+          : currentChatHistory.map((message, index) => {
+              let answerText = null;
+              let fullAnswer: any = null;
+              if (message.aiResp && !message.aiResp.answer[0].answer) {
+                answerText = message.aiResp;
+              } else if (message.aiResp && message.aiResp.answer[0].answer) {
+                fullAnswer = message.aiResp;
+                answerText = message.aiResp.answer[0].answer;
+              }
+
+              return (
+                <div key={index}>
+                  {message.human && (
+                    <div className={Styles.chatElement}>
+                      <div>
+                        <strong>You:</strong>
+                      </div>
+                      <div>{message.human}</div>
+                    </div>
+                  )}
+                  {message.aiResp && (
+                    <div className={Styles.chatElement}>
+                      <div>
+                        <strong>Assistant:</strong>
+                      </div>
+                      <div>{answerText}</div>
+                      {fullAnswer && (
+                        <div>
+                          {fullAnswer.answer[0].citations.map(
+                            (value: number, index: number) => {
+                              console.log(message);
+                              return (
+                                <Button
+                                  key={index}
+                                  variant="outlined"
+                                  style={{
+                                    margin: "5px",
+                                    padding: "2px 5px",
+                                    minWidth: "fit-content",
+                                    textTransform: "none",
+                                  }}
+                                  onClick={() => {
+                                    const cleanedText = cleanText(
+                                      fullAnswer.context[value].page_content
+                                    );
+                                    Api.setCurrentCitationText(cleanedText);
+                                  }}
+                                >
+                                  {index + 1}.
+                                  {truncateText(
+                                    cleanText(
+                                      fullAnswer.context[value].page_content
+                                    ),
+                                    80
+                                  )}
+                                </Button>
+                              );
+                            }
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+      </Box>
       <div className={Styles.inputContainer}>
         <TextField
           className={Styles.promptInput}
@@ -85,6 +149,17 @@ const ChatUI = () => {
             },
             "& .MuiInputLabel-root": {
               color: "#ffffff",
+            },
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": {
+                borderColor: "transparent", // Remove default border color
+              },
+              "&:hover fieldset": {
+                borderColor: "transparent", // Remove border color on hover
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: "transparent", // Remove border color when focused
+              },
             },
           }}
           onChange={(e) => {
@@ -117,7 +192,7 @@ const ChatUI = () => {
           }}
         >
           {isLoadingChatResponse ? (
-            <CircularProgress size={24} style={{ color: "whit" }} /> // Display spinner when loading
+            <CircularProgress size={24} style={{ color: "white" }} /> // Display spinner when loading
           ) : (
             <ArrowUpwardIcon style={{ color: "white" }} /> // Otherwise display the arrow icon
           )}

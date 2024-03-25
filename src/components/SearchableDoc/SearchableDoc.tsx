@@ -8,14 +8,21 @@ import Styles from "./SearchableDoc.module.css";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
-function highlightPattern(text: any, pattern: string) {
-  return text.replace(pattern, (value: any) => `<mark>${value}</mark>`);
+// function highlightPattern(text: any, pattern: string) {
+//   return text.replace(pattern, (value: any) => `<mark>${value}</mark>`);
+// }
+
+function highlightPattern(text: string, pattern: string) {
+  // Create a dynamic regex that ignores extra whitespace in the search pattern
+  const regexPattern = pattern.trim().split(/\s+/).join("\\s+");
+  const regex = new RegExp(`(${regexPattern})`, "gi");
+  return text.replace(regex, (match) => `<mark>${match}</mark>`);
 }
 
 function SearchablePDF() {
   const pdfFileUrl = useSelector(currentFileUrlState);
   const [text, setText] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("Dear Dave and     session");
   const [pageNumber, setPageNumber] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [matchingPages, setMatchingPages] = useState<any[]>([]);
@@ -55,10 +62,19 @@ function SearchablePDF() {
               textContent += content.items
                 .map((item: any) => item.str)
                 .join(" ");
+              // if (
+              //   content.items.some((item: any) =>
+              //     item.str
+              //       .replace(/\s/g, "")
+              //       .toLowerCase()
+              //       .includes(searchQuery.replace(/\s/g, "").toLowerCase())
+              //   )
+              const searchRegex = new RegExp(
+                searchQuery.trim().split(/\s+/).join("\\s+"),
+                "i"
+              );
               if (
-                content.items.some((item: any) =>
-                  item.str.toLowerCase().includes(searchQuery.toLowerCase())
-                )
+                content.items.some((item: any) => searchRegex.test(item.str))
               ) {
                 pageMatches[i - 1] = true; // Page contains a match
               }

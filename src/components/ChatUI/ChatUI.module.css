@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   justify-content: end;
+  width: 100%;
 }
 
 .inputContainer {
@@ -11,4 +12,10 @@
   padding: 2px;
   border-radius: 10px;
   border: 1px solid gray;
+}
+
+.chatElement {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }

@@ -24,6 +24,12 @@ const DocsSlice = createSlice({
     setCurrenFileUrl: (state, action: PayloadAction<string | null>) => {
       state.currentFileUrl = action.payload;
     },
+    setChatHistory: (state, action: PayloadAction<any[]>) => {
+      state.chatHistory = action.payload;
+    },
+    setCurrentCitationText: (state, action: PayloadAction<string>) => {
+      state.currentCitationText = action.payload;
+    },
   },
 });
 
@@ -39,5 +45,8 @@ export const currentChatResponseState = (state: any): string | null =>
   state.docs.currentChatResponse;
 export const currentFileUrlState = (state: any): string | null =>
   state.docs.currentFileUrl;
+export const chatHistoryState = (state: any): any[] => state.docs.chatHistory;
+export const currentCitationTextState = (state: any): string =>
+  state.docs.currentCitationText;
 
 export default DocsSlice.reducer;

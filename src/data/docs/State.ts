@@ -6,6 +6,8 @@ export interface IDocsState {
   isLoadingChatResponse: boolean;
   currentChatResponse: string | null;
   currentFileUrl: string | null;
+  chatHistory: any[];
+  currentCitationText: string;
 }
 
 export const initialState: IDocsState = {
@@ -14,4 +16,6 @@ export const initialState: IDocsState = {
   isLoadingChatResponse: false,
   currentChatResponse: null,
   currentFileUrl: null,
+  chatHistory: [],
+  currentCitationText: "",
 };

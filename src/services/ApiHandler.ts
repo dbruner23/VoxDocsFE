@@ -26,13 +26,13 @@ export const process = async (
   }
 };
 
-export const chatPromptResponse = async (body: any) => {
+export const docQuery = async (body: any) => {
   try {
     // const username = process.env.REACT_APP_USERNAME;
     // const password = sessionStorage.getItem("userPassword");
     // const encodedCredentials = btoa(`${username}:${password}`);
 
-    const response = await api.post("/geopt/flights", body, {
+    const response = await api.post("/docquery", body, {
       headers: {
         "Content-Type": "application/json",
         // Authorization: `Basic ${encodedCredentials}`,
