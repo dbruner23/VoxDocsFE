@@ -1,6 +1,6 @@
 import { DocsActions } from "./Reducer";
 import store from "../../services/Store";
-import { getFileTypeFromExtension } from "../utils/DocsUtils";
+import { getFileTypeFromExtension, isJsonString } from "../utils/DocsUtils";
 import { process, docQuery } from "../../services/ApiHandler";
 
 const Api = {
@@ -39,11 +39,11 @@ const Api = {
     const chatHistory = [...currentChatHistory];
     debugger;
     if (chatResponse[0] && chatResponse[0].answer) {
-      const chatResponseData = JSON.parse(chatResponse[0].answer);
-      if (typeof chatResponseData.answer === "string") {
+      if (isJsonString(chatResponse[0].answer)) {
+        const chatResponseData = JSON.parse(chatResponse[0].answer);
         chatHistory.push({ aiResp: chatResponseData });
       } else {
-        chatHistory.push({ aiResp: chatResponseData });
+        chatHistory.push({ aiResp: chatResponse[0] });
       }
     }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   IconButton,
   SvgIcon,
@@ -25,6 +25,13 @@ const ChatUI = () => {
   const currentChatHistory = useSelector(chatHistoryState);
   const [userPrompt, setUserPrompt] = useState<string>("");
   const [canSubmit, setCanSubmit] = useState<boolean>(false);
+  const latestMessageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (latestMessageRef.current) {
+      latestMessageRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [currentChatHistory]);
 
   const handleSubmit = () => {
     if (canSubmit) {
@@ -67,14 +74,19 @@ const ChatUI = () => {
               let answerText = null;
               let fullAnswer: any = null;
               if (message.aiResp && !message.aiResp.answer[0].answer) {
-                answerText = message.aiResp;
+                answerText = message.aiResp.answer;
               } else if (message.aiResp && message.aiResp.answer[0].answer) {
                 fullAnswer = message.aiResp;
                 answerText = message.aiResp.answer[0].answer;
               }
 
+              const isLatestMessage = index === currentChatHistory.length - 1;
+
               return (
-                <div key={index}>
+                <div
+                  key={index}
+                  ref={isLatestMessage ? latestMessageRef : null}
+                >
                   {message.human && (
                     <div className={Styles.chatElement}>
                       <div>
@@ -93,7 +105,6 @@ const ChatUI = () => {
                         <div>
                           {fullAnswer.answer[0].citations.map(
                             (value: number, index: number) => {
-                              console.log(message);
                               return (
                                 <Button
                                   key={index}

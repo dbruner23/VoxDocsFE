@@ -1,36 +1,54 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { useSelector } from "react-redux";
-import { currentFileUrlState } from "../../data/docs/Reducer";
+import {
+  currentCitationTextState,
+  currentFileUrlState,
+} from "../../data/docs/Reducer";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import Styles from "./SearchableDoc.module.css";
+import { escapeRegExp, normalizeText } from "../../data/utils/DocsUtils";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
-// function highlightPattern(text: any, pattern: string) {
-//   return text.replace(pattern, (value: any) => `<mark>${value}</mark>`);
-// }
-
 function highlightPattern(text: string, pattern: string) {
-  // Create a dynamic regex that ignores extra whitespace in the search pattern
-  const regexPattern = pattern.trim().split(/\s+/).join("\\s+");
-  const regex = new RegExp(`(${regexPattern})`, "gi");
-  return text.replace(regex, (match) => `<mark>${match}</mark>`);
+  const patternWords = pattern.split(/\s+/);
+  let textIncludesPattern = false;
+
+  // Generate all possible substrings of 4 consecutive words
+  for (let i = 0; i < patternWords.length - 4; i++) {
+    const substring = patternWords.slice(i, i + 5).join(" ");
+    if (text.toLowerCase().includes(substring.toLowerCase())) {
+      textIncludesPattern = true;
+      break; // Exit the loop early if a match is found
+    }
+  }
+
+  if (textIncludesPattern) {
+    // If any part of the pattern is found within the text, wrap the entire line in <mark> tags
+    return `<mark>${text}</mark>`;
+  } else {
+    // Return the text as is if the pattern is not found
+    return text;
+  }
+  // const regexPattern = pattern.trim().split(/\s+/).join("[\\s\\S]*");
+  // const regex = new RegExp(`(${regexPattern})`, "gi");
+  // return text.replace(regex, (match) => `<mark>${match}</mark>`);
 }
 
 function SearchablePDF() {
   const pdfFileUrl = useSelector(currentFileUrlState);
+  const currentCitationText = useSelector(currentCitationTextState);
   const [text, setText] = useState("");
-  const [searchQuery, setSearchQuery] = useState("Dear Dave and     session");
   const [pageNumber, setPageNumber] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [matchingPages, setMatchingPages] = useState<any[]>([]);
   const [currentPageInput, setCurrentPageInput] = useState(pageNumber);
 
   const textRenderer = useCallback(
-    (textItem: any) => highlightPattern(textItem.str, searchQuery),
-    [searchQuery]
+    (textItem: any) => highlightPattern(textItem.str, currentCitationText),
+    [currentCitationText]
   );
 
   const handleCurrentPageInputChange = (
@@ -53,61 +71,44 @@ function SearchablePDF() {
   useEffect(() => {
     if (pdfFileUrl) {
       pdfjs.getDocument(pdfFileUrl).promise.then((doc: any) => {
-        let textContent = "";
-        const pageMatches = new Array(doc.numPages).fill(false);
         setTotalPages(doc.numPages);
+        const pagePromises = [];
         for (let i = 1; i <= doc.numPages; i++) {
-          doc.getPage(i).then((page: any) => {
-            page.getTextContent().then((content: any) => {
-              textContent += content.items
+          const pagePromise = doc.getPage(i).then((page: any) => {
+            return page.getTextContent().then((content: any) => {
+              const contentText = content.items
                 .map((item: any) => item.str)
                 .join(" ");
-              // if (
-              //   content.items.some((item: any) =>
-              //     item.str
-              //       .replace(/\s/g, "")
-              //       .toLowerCase()
-              //       .includes(searchQuery.replace(/\s/g, "").toLowerCase())
-              //   )
-              const searchRegex = new RegExp(
-                searchQuery.trim().split(/\s+/).join("\\s+"),
-                "i"
+              const firstTenWords = currentCitationText
+                .split(/\s+/)
+                .slice(0, 10)
+                .join(" ");
+
+              return normalizeText(contentText).includes(
+                normalizeText(firstTenWords)
               );
-              if (
-                content.items.some((item: any) => searchRegex.test(item.str))
-              ) {
-                pageMatches[i - 1] = true; // Page contains a match
-              }
             });
           });
+          pagePromises.push(pagePromise);
         }
-        setText(textContent);
-        setMatchingPages(pageMatches);
+
+        Promise.all(pagePromises).then((pageMatches) => {
+          setMatchingPages(pageMatches);
+          const firstMatchingPage = pageMatches.findIndex((match) => match) + 1;
+          if (firstMatchingPage > 0) {
+            setPageNumber(firstMatchingPage);
+          } else {
+            setPageNumber(1);
+          }
+        });
       });
     }
-  }, [pdfFileUrl, searchQuery]);
-
-  useEffect(() => {
-    // Update page number when the search query changes
-    if (searchQuery && matchingPages.length > 0) {
-      const firstMatchingPage =
-        matchingPages.findIndex((isMatch) => isMatch) + 1;
-      setPageNumber(firstMatchingPage);
-    } else {
-      setPageNumber(1); // Reset to the first page if the search has no results
-    }
-  }, [searchQuery, matchingPages]);
+  }, [pdfFileUrl, currentCitationText]);
 
   return (
     <div className={Styles.documentContainer}>
-      {/* <input
-        type="text"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-      /> */}
       <div style={{ height: "95vh", overflow: "auto" }}>
         <Document file={pdfFileUrl}>
-          {/* Render pages with potential search highlighting */}
           <Page pageNumber={pageNumber} customTextRenderer={textRenderer} />
         </Document>
       </div>
@@ -115,8 +116,11 @@ function SearchablePDF() {
         style={{
           display: "flex",
           backgroundColor: "transparent",
+          gap: "1rem",
           justifyContent: "center",
+          alignItems: "center",
           marginTop: "1rem",
+          marginBottom: "1rem",
           zIndex: 20,
           bottom: "0px",
         }}
@@ -137,8 +141,8 @@ function SearchablePDF() {
           value={currentPageInput}
           onChange={handleCurrentPageInputChange}
           onKeyDown={handleCurrentPageInputKeyDown}
-          style={{ margin: "0 1rem" }}
         />
+        <span style={{ color: "white" }}>of {totalPages}</span>
         <button
           disabled={pageNumber === totalPages}
           onClick={() => {

@@ -51,3 +51,26 @@ export const truncateText = (text: string, maxLength: number) => {
   }
   return text;
 };
+
+export const isJsonString = (str: string) => {
+  try {
+    JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+  return true;
+};
+
+export const escapeRegExp = (string: string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
+};
+
+export const normalizeText = (text: string): string => {
+  return text
+    .replace(/”/g, '"') // Normalize curly double quotes to straight quotes
+    .replace(/‘/g, "'") // Normalize curly single quotes to straight quotes
+    .replace(/–|—/g, "-") // Normalize en and em dashes to hyphens
+    .replace(/\s+/g, " ") // Replace multiple whitespace characters with a single space
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, ""); // Remove diacritics
+};
