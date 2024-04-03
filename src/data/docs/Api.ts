@@ -1,7 +1,11 @@
 import { DocsActions } from "./Reducer";
 import store from "../../services/Store";
 import { getFileTypeFromExtension, isJsonString } from "../utils/DocsUtils";
-import { process, docQuery } from "../../services/ApiHandler";
+import {
+  processFile,
+  docQuery,
+  clearAllFiles,
+} from "../../services/ApiHandler";
 
 const Api = {
   setCurrentFileUrl: (url: string | null) => {
@@ -13,7 +17,7 @@ const Api = {
       alert("Invalid file type");
       return;
     }
-    const response = await process(file, fileType);
+    const response = await processFile(file, fileType);
     console.log(response);
     if (response?.data) {
       store.dispatch(DocsActions.setProcessedDocument(response?.data));
@@ -55,6 +59,20 @@ const Api = {
   },
   setCurrentCitationText: (text: string) => {
     store.dispatch(DocsActions.setCurrentCitationText(text));
+  },
+  setIsLoggedIn: (isLoggedIn: boolean) => {
+    store.dispatch(DocsActions.setIsLoggedIn(isLoggedIn));
+  },
+  clearAllDocs: async () => {
+    if (store.getState().docs.currentFileUrl) {
+      store.dispatch(DocsActions.setIsProcessingDocument(true));
+      const response = await clearAllFiles();
+      console.log(response);
+      store.dispatch(DocsActions.setProcessedDocument(null));
+      store.dispatch(DocsActions.setChatHistory([]));
+      store.dispatch(DocsActions.setCurrentCitationText(""));
+      store.dispatch(DocsActions.setIsProcessingDocument(false));
+    }
   },
 };
 

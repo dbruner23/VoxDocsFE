@@ -30,6 +30,9 @@ const DocsSlice = createSlice({
     setCurrentCitationText: (state, action: PayloadAction<string>) => {
       state.currentCitationText = action.payload;
     },
+    setIsLoggedIn: (state, action: PayloadAction<boolean>) => {
+      state.isLoggedIn = action.payload;
+    },
   },
 });
 
@@ -48,5 +51,6 @@ export const currentFileUrlState = (state: any): string | null =>
 export const chatHistoryState = (state: any): any[] => state.docs.chatHistory;
 export const currentCitationTextState = (state: any): string =>
   state.docs.currentCitationText;
+export const isLoggedInState = (state: any): boolean => state.docs.isLoggedIn;
 
 export default DocsSlice.reducer;

@@ -8,6 +8,7 @@ export interface IDocsState {
   currentFileUrl: string | null;
   chatHistory: any[];
   currentCitationText: string;
+  isLoggedIn: boolean;
 }
 
 export const initialState: IDocsState = {
@@ -18,4 +19,5 @@ export const initialState: IDocsState = {
   currentFileUrl: null,
   chatHistory: [],
   currentCitationText: "",
+  isLoggedIn: false,
 };

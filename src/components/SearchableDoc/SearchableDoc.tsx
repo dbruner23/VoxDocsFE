@@ -9,6 +9,9 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import Styles from "./SearchableDoc.module.css";
 import { escapeRegExp, normalizeText } from "../../data/utils/DocsUtils";
+import { Button } from "@mui/material";
+import Api from "../../data/docs/Api";
+import { useNavigate } from "react-router-dom";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
@@ -40,7 +43,7 @@ function highlightPattern(text: string, pattern: string) {
 function SearchablePDF() {
   const pdfFileUrl = useSelector(currentFileUrlState);
   const currentCitationText = useSelector(currentCitationTextState);
-  const [text, setText] = useState("");
+  const navigate = useNavigate();
   const [pageNumber, setPageNumber] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [matchingPages, setMatchingPages] = useState<any[]>([]);
@@ -68,6 +71,11 @@ function SearchablePDF() {
     }
   };
 
+  const handleClearAll = () => {
+    Api.clearAllDocs();
+    navigate("/");
+  };
+
   useEffect(() => {
     if (pdfFileUrl) {
       pdfjs.getDocument(pdfFileUrl).promise.then((doc: any) => {
@@ -81,7 +89,7 @@ function SearchablePDF() {
                 .join(" ");
               const firstTenWords = currentCitationText
                 .split(/\s+/)
-                .slice(0, 10)
+                .slice(0, 15)
                 .join(" ");
 
               return normalizeText(contentText).includes(
@@ -152,6 +160,9 @@ function SearchablePDF() {
         >
           Next
         </button>
+        <Button onClick={handleClearAll} variant="contained">
+          Clear All
+        </Button>
       </div>
     </div>
   );

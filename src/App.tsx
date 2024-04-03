@@ -3,6 +3,7 @@ import { Provider } from "react-redux";
 import store from "./services/Store";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import VoxDocsLanding from "./views/VoxDoxLanding";
+import SplitScreenWithChat from "./views/SplitScreen/SplitScreenDocChat";
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<VoxDocsLanding />} />
+          <Route path="/chat" element={<SplitScreenWithChat />} />
         </Routes>
       </BrowserRouter>
     </Provider>

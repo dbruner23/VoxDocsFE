@@ -5,8 +5,9 @@ import { processedDocumentState } from "../../data/docs/Reducer";
 import Styles from "./SplitScreenDocChat.module.css";
 import { IProcessedDocument } from "../../data/docs/Interfaces";
 import { highlightText } from "../../utils/documentUtils";
-import ChatUI from "../ChatUI/ChatUI";
-import SearchableDoc from "../SearchableDoc/SearchableDoc";
+import ChatUI from "../../components/ChatUI/ChatUI";
+import SearchableDoc from "../../components/SearchableDoc/SearchableDoc";
+import { useNavigate } from "react-router-dom";
 
 const boxStyle = {
   display: "flex",
@@ -21,9 +22,26 @@ const boxStyle = {
 
 const SplitScreenWithChat = () => {
   const fileContent = useSelector(processedDocumentState);
+  const navigate = useNavigate();
   const containerRef = useRef(null);
-  const [conversation, setConversation] = useState([]);
   const [highlightedString, setHighlightedString] = useState("");
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = ""; // Custom message is often ignored
+      const confirmationMessage =
+        "Are you sure you want to leave? Chat and documents will be cleared.";
+
+      if (window.confirm(confirmationMessage)) {
+        navigate("/");
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   //   const handleSendMessage = (message) => {
   //     setConversation([...conversation, message]);
