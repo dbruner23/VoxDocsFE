@@ -79,7 +79,7 @@ const Login = () => {
         VoxDocs
       </TitleText>
       <Typography variant="h5" color="text.secondary" gutterBottom>
-        Efficiently surface key insights from any document.
+        Efficiently surface insights from any document.
       </Typography>
       <div
         className={"passwordContainer"}

@@ -64,15 +64,15 @@ const Api = {
     store.dispatch(DocsActions.setIsLoggedIn(isLoggedIn));
   },
   clearAllDocs: async () => {
-    if (store.getState().docs.currentFileUrl) {
-      store.dispatch(DocsActions.setIsProcessingDocument(true));
-      const response = await clearAllFiles();
-      console.log(response);
-      store.dispatch(DocsActions.setProcessedDocument(null));
-      store.dispatch(DocsActions.setChatHistory([]));
-      store.dispatch(DocsActions.setCurrentCitationText(""));
-      store.dispatch(DocsActions.setIsProcessingDocument(false));
-    }
+    store.dispatch(DocsActions.setIsProcessingDocument(true));
+    const response = await clearAllFiles();
+    console.log(response);
+    // remove current doc url
+    store.dispatch(DocsActions.setCurrenFileUrl(null));
+    store.dispatch(DocsActions.setProcessedDocument(null));
+    store.dispatch(DocsActions.setChatHistory([]));
+    store.dispatch(DocsActions.setCurrentCitationText(""));
+    store.dispatch(DocsActions.setIsProcessingDocument(false));
   },
 };
 

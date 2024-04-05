@@ -42,6 +42,11 @@ export const cleanText = (text: string) => {
   // Replace remaining Unicode characters with ASCII equivalents
   text = text.normalize("NFD").replace(/[\u0300-\u036F]/g, "");
 
+  const firstPeriodIndex = text.indexOf(".");
+  if (firstPeriodIndex !== -1 && !/^[A-Z]/.test(text)) {
+    text = text.slice(firstPeriodIndex + 1);
+  }
+
   return text;
 };
 

@@ -8,6 +8,7 @@ import { highlightText } from "../../utils/documentUtils";
 import ChatUI from "../../components/ChatUI/ChatUI";
 import SearchableDoc from "../../components/SearchableDoc/SearchableDoc";
 import { useNavigate } from "react-router-dom";
+import Api from "../../data/docs/Api";
 
 const boxStyle = {
   display: "flex",
@@ -22,30 +23,24 @@ const boxStyle = {
 
 const SplitScreenWithChat = () => {
   const fileContent = useSelector(processedDocumentState);
-  const navigate = useNavigate();
   const containerRef = useRef(null);
   const [highlightedString, setHighlightedString] = useState("");
+  const navigate = useNavigate();
+
+  const handleUnload = async (event: any) => {
+    event.preventDefault();
+    const response = await Api.clearAllDocs();
+    console.log(response);
+    navigate("/");
+  };
 
   useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = ""; // Custom message is often ignored
-      const confirmationMessage =
-        "Are you sure you want to leave? Chat and documents will be cleared.";
-
-      if (window.confirm(confirmationMessage)) {
-        navigate("/");
-      }
+    window.addEventListener("beforeunload", handleUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
     };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
-  //   const handleSendMessage = (message) => {
-  //     setConversation([...conversation, message]);
-  //   };
   useEffect(() => {
     // Scroll to the first highlighted element
     if (highlightedString) {

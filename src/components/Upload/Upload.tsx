@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { PDFDocument } from "pdf-lib";
 import {
   Container,
   Typography,
@@ -27,11 +28,23 @@ const Upload = () => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files && event.target.files[0];
+
     if (file) {
-      setSelectedFile(file);
-      const fileUrl = URL.createObjectURL(file);
-      await Api.setCurrentFileUrl(fileUrl);
-      setIsFileUploaded(true);
+      if (file.type !== "application/pdf") {
+        return;
+      }
+
+      const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
+      const numPages = await pdfDoc.getPageCount();
+
+      if (numPages <= 50) {
+        setSelectedFile(file);
+        const fileUrl = URL.createObjectURL(file);
+        await Api.setCurrentFileUrl(fileUrl);
+        setIsFileUploaded(true);
+      } else {
+        window.alert("PDF file is too large.");
+      }
     }
   };
 
@@ -62,7 +75,7 @@ const Upload = () => {
         VoxDocs
       </TitleText>
       <Typography variant="h5" color="text.secondary" gutterBottom>
-        Efficiently surface key insights from any document.
+        Efficiently surface insights from any document.
       </Typography>
       {isFileUploaded ? (
         <>
@@ -99,18 +112,12 @@ const Upload = () => {
           sx={{ maxWidth: "20rem" }}
         >
           Upload a File
-          <input
-            type="file"
-            accept=".csv,.json,.html,.md,.pdf"
-            hidden
-            onChange={handleFileUpload}
-          />
+          <input type="file" accept=".pdf" hidden onChange={handleFileUpload} />
         </Button>
       )}
       <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-        Upload any pdf, html, md, csv, or json file and click "Process" to
-        interact with its content in natural language through LLM-enabled chat
-        with citations.
+        Upload any pdf 50 pages or less and click "Process" to interact with it
+        through LLM-powered chat with citations.
       </Typography>
     </Box>
   );

@@ -105,16 +105,30 @@ const ChatUI = () => {
                         <div>
                           {fullAnswer.answer[0].citations.map(
                             (value: number, index: number) => {
+                              const cleanedText = cleanText(
+                                fullAnswer.context[value].page_content
+                              );
                               return (
                                 <Button
                                   key={index}
                                   variant="outlined"
-                                  style={{
+                                  sx={{
                                     margin: "5px",
                                     padding: "2px 5px",
                                     minWidth: "fit-content",
                                     textTransform: "none",
+                                    overflow: "hidden",
+                                    whiteSpace: "nowrap",
+                                    textOverflow: "ellipsis",
+                                    width: "95%", // Take up the full width of the container
+                                    display: "block", // Ensure it's treated as a block element to fill the width
                                   }}
+                                  // style={{
+                                  //   margin: "5px",
+                                  //   padding: "2px 5px",
+                                  //   minWidth: "fit-content",
+                                  //   textTransform: "none",
+                                  // }}
                                   onClick={() => {
                                     const cleanedText = cleanText(
                                       fullAnswer.context[value].page_content

@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import {
   currentCitationTextState,
   currentFileUrlState,
+  isProcessingDocumentState,
 } from "../../data/docs/Reducer";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -43,6 +44,7 @@ function highlightPattern(text: string, pattern: string) {
 function SearchablePDF() {
   const pdfFileUrl = useSelector(currentFileUrlState);
   const currentCitationText = useSelector(currentCitationTextState);
+  const isProcessingDocument = useSelector(isProcessingDocumentState);
   const navigate = useNavigate();
   const [pageNumber, setPageNumber] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -71,45 +73,60 @@ function SearchablePDF() {
     }
   };
 
-  const handleClearAll = () => {
-    Api.clearAllDocs();
+  const handleClearAll = async () => {
+    await Api.clearAllDocs();
     navigate("/");
+  };
+
+  const findMatchingPages = async (
+    pdfFileUrl: string,
+    currentCitationText: string
+  ) => {
+    const doc = await pdfjs.getDocument(pdfFileUrl).promise;
+    const pagePromises = [];
+
+    for (let i = 1; i <= doc.numPages; i++) {
+      const pagePromise = doc.getPage(i).then((page: any) => {
+        return page.getTextContent().then((content: any) => {
+          const contentText = content.items
+            .map((item: any) => item.str)
+            .join(" ");
+          const firstTenWords = currentCitationText
+            .split(/\s+/)
+            .slice(0, 10)
+            .join(" ");
+
+          return normalizeText(contentText).includes(
+            normalizeText(firstTenWords)
+          );
+        });
+      });
+      pagePromises.push(pagePromise);
+    }
+
+    const pageMatches = await Promise.all(pagePromises);
+    setMatchingPages(pageMatches);
+    const firstMatchingPage = pageMatches.findIndex((match) => match) + 1;
+    if (firstMatchingPage > 0) {
+      setPageNumber(firstMatchingPage);
+      setCurrentPageInput(firstMatchingPage);
+    } else {
+      setPageNumber(1);
+      setCurrentPageInput(1);
+    }
   };
 
   useEffect(() => {
     if (pdfFileUrl) {
       pdfjs.getDocument(pdfFileUrl).promise.then((doc: any) => {
         setTotalPages(doc.numPages);
-        const pagePromises = [];
-        for (let i = 1; i <= doc.numPages; i++) {
-          const pagePromise = doc.getPage(i).then((page: any) => {
-            return page.getTextContent().then((content: any) => {
-              const contentText = content.items
-                .map((item: any) => item.str)
-                .join(" ");
-              const firstTenWords = currentCitationText
-                .split(/\s+/)
-                .slice(0, 15)
-                .join(" ");
-
-              return normalizeText(contentText).includes(
-                normalizeText(firstTenWords)
-              );
-            });
-          });
-          pagePromises.push(pagePromise);
-        }
-
-        Promise.all(pagePromises).then((pageMatches) => {
-          setMatchingPages(pageMatches);
-          const firstMatchingPage = pageMatches.findIndex((match) => match) + 1;
-          if (firstMatchingPage > 0) {
-            setPageNumber(firstMatchingPage);
-          } else {
-            setPageNumber(1);
-          }
-        });
       });
+    }
+  }, [pdfFileUrl]);
+
+  useEffect(() => {
+    if (pdfFileUrl && currentCitationText) {
+      findMatchingPages(pdfFileUrl, currentCitationText);
     }
   }, [pdfFileUrl, currentCitationText]);
 
@@ -160,8 +177,12 @@ function SearchablePDF() {
         >
           Next
         </button>
-        <Button onClick={handleClearAll} variant="contained">
-          Clear All
+        <Button
+          onClick={handleClearAll}
+          variant="contained"
+          disabled={isProcessingDocument}
+        >
+          Clear & Exit
         </Button>
       </div>
     </div>
