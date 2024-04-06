@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:4000",
+  baseURL: "https://voxdoxbe.onrender.com",
 });
 
 export const authenticate = async (password: string) => {
