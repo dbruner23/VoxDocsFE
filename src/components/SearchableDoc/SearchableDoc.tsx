@@ -10,7 +10,7 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import Styles from "./SearchableDoc.module.css";
 import { escapeRegExp, normalizeText } from "../../data/utils/DocsUtils";
-import { Button } from "@mui/material";
+import { Button, CircularProgress } from "@mui/material";
 import Api from "../../data/docs/Api";
 import { useNavigate } from "react-router-dom";
 
@@ -177,13 +177,17 @@ function SearchablePDF() {
         >
           Next
         </button>
-        <Button
-          onClick={handleClearAll}
-          variant="contained"
-          disabled={isProcessingDocument}
-        >
-          Clear & Exit
-        </Button>
+        {isProcessingDocument ? (
+          <CircularProgress />
+        ) : (
+          <Button
+            onClick={handleClearAll}
+            variant="contained"
+            disabled={isProcessingDocument}
+          >
+            Clear & Exit
+          </Button>
+        )}
       </div>
     </div>
   );
