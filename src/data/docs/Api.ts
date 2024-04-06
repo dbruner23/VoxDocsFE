@@ -41,7 +41,6 @@ const Api = {
 
     const currentChatHistory = store.getState().docs.chatHistory;
     const chatHistory = [...currentChatHistory];
-    debugger;
     if (chatResponse[0] && chatResponse[0].answer) {
       if (isJsonString(chatResponse[0].answer)) {
         const chatResponseData = JSON.parse(chatResponse[0].answer);

@@ -55,8 +55,13 @@ const Upload = () => {
 
   const handleProcess = () => {
     if (selectedFile) {
-      Api.processFile(selectedFile);
-      Api.setIsProcessingDocument(true);
+      try {
+        Api.processFile(selectedFile);
+        Api.setIsProcessingDocument(true);
+      } catch (error) {
+        console.error("Error processing file", error);
+        window.alert(error);
+      }
     }
   };
 
@@ -116,8 +121,8 @@ const Upload = () => {
         </Button>
       )}
       <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-        Upload any pdf 50 pages or less and click "Process" to interact with it
-        through LLM-powered chat with citations.
+        Upload any PDF of 50 pages or less and click "Process" to interact with
+        it through LLM-powered chat with citations.
       </Typography>
     </Box>
   );
